@@ -9,3 +9,5 @@ class Card:
     def __str__(self):
         return(f"{self.rank} of {self.suit}")
     
+    
+    

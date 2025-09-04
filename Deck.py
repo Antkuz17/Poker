@@ -22,8 +22,9 @@ class Deck:
     def __iter__(self):
         return iter(self.Cards)
     
-    # # Method will "pull" a card from the deck
-    # def PullCard():
+    # Method will "pull" a card from the deck
+    def PullCard(self):
+        return self.Cards.pop(1)
     
     # Method will shuffle the deck
     def ShuffleCards(self):
