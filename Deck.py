@@ -1,4 +1,6 @@
 from Card import Card
+import random
+
 class Deck:
     # Constructor
     def __init__(self):
@@ -13,6 +15,18 @@ class Deck:
             for y in ranks:
                 self.Cards.append(Card(y, x))
     
+
+    # Iterator method that allows for iteration throught the deck
+    # Returns an itererable type when called
+    # When called in a loop, this method will return each card in the deck
     def __iter__(self):
         return iter(self.Cards)
+    
+    # # Method will "pull" a card from the deck
+    # def PullCard():
+    
+    # Method will shuffle the deck
+    def ShuffleCards(self):
+        return random.shuffle(self.Cards)
+
 
