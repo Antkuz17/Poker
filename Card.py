@@ -9,5 +9,14 @@ class Card:
     def __str__(self):
         return(f"{self.rank} of {self.suit}")
     
+    # Getters and Setters
+
+    def getSuit(self) -> str:
+        """Returns the suit of the card as a string"""
+        return self.suit
+    
+    def getRank(self) -> str:
+        """Returns the rank of the card as a string (2, 5, J, A, etc)"""
+        return self.rank
     
     
