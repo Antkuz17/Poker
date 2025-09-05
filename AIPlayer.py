@@ -4,8 +4,20 @@ from Player import Player
 import random
 class AIPlayer(Player):
 
-   def genRandChipStack(self, min: int, max: int) -> None:
-      """Will generate a random integer within the specified bounds inclusive, returns no value"""
-      chipstack = random.randint(min, max)
-      print(f"{self.name} Chipstack has generated a value of {self.chipstack}")
+   def __init__(self, name: str, chipstack: int, bet: int, aggression: int):
+      """This constructor contains the parent constructor, the parent constructor will be called first
+      and then extra variables will be initilized like aggression which regulates how aggresively the aiplayer will bet"""
+      super().__init__(name, chipstack, bet)
+      self.aggression = aggression
 
+
+   def setAggression(self, aggression: int) -> None:
+      """Setter function for stating the aggression level of the AI
+      1-10 scale with higher numbers meaning more aggressive actions such as
+      raising, calling, and going all in"""
+      self.aggression = aggression
+
+
+
+   
+   

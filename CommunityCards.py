@@ -11,6 +11,8 @@ class CommunityCards:
         """Prints all of the current community cards to the terminal"""
         for Card in self.Cards:
             print(Card)
+    
+    
 
 
 

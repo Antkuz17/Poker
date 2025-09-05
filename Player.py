@@ -1,7 +1,7 @@
 from Hand import Hand
 
 class Player:
-    def __init__(self, name: str, chipstack: int, hand: Hand, bet: int) -> None:
+    def __init__(self, name: str, chipstack: int, bet: int) -> None:
         self.name = name
         self.chipstack = chipstack
         self.hand = Hand()
@@ -17,7 +17,7 @@ class Player:
         """Sets the value of the chipstack to the number input"""
         self.chipstack = chipstack
 
-    def setbet(self, bet:int) -> None:
+    def setBet(self, bet:int) -> None:
         """Sets the value of the bet variable"""
         self.bet = bet
 
