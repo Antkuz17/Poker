@@ -15,6 +15,18 @@ class Hand:
         for card in self.Cards:
             print(card)
 
+    def firstCard(self) -> Card:
+        """Returns the first card in the hand"""
+        return self.Cards[0]
+    
+    def secondCard(self) -> Card:
+        """Returns the second card in the hand"""
+        return self.Cards[1]
+
+    def clearHand(self) -> None:
+        """Will clear the hand of all cards"""
+        self.Cards.clear()
+
     def getPair(self) -> tuple[bool,str]:
         """Returns two distict values held in a tuple type. The first is a boolean telling whether the hand
         has a pair (pair of 2's, Aces, kings, etc). Second value returns the rank of the pair. If there is no pair,
