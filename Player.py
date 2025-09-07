@@ -8,6 +8,7 @@ class Player:
         self.bet = 0
         self.fold = False
         self.isAIPlayer = False
+        self.allIn = False
         
 
     # Getters and Setters
@@ -21,8 +22,14 @@ class Player:
         self.chipstack = chipstack
 
     def setBet(self, bet:int) -> None:
-        """Sets the value of the bet variable"""
+        """Sets the bet of the player and deducts that amount from their chipstack, if the bet is equal to their chipstack
+        then the player is all in"""
+        self.chipstack -= bet
         self.bet = bet
+        if self.chipstack == 0:
+            print(f"{self.name} is all in!")
+            self.allIn = True
+
     
     def setFoldStatus(self, status: bool) -> None:
         """Sets the status of a player to folded or not"""

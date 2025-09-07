@@ -29,7 +29,9 @@ class game:
 
         self.playerList = createAIPlayers(self.playerList) # Creating 3 AI players and appending them to the playerList
 
-        print("The following players have joined the game:") # Mostly for testing purposes but this introduces the players
+        self.playerList = kick(self.playerList)
+
+        print("The following players are in the game:") # Mostly for testing purposes but this introduces the players
         for i in range(len(self.playerList)):
             print(f"{self.playerList[i].getName()} has a chipstack of {self.playerList[i].getChipStack()}")
 
@@ -46,11 +48,32 @@ class game:
         print(self.playerList[2].getName() + " is a regular player")
         print(self.playerList[3].getName() + " is a regular player")
 
+        attemptedBet = 0
         # Start of preflop betting
-        if not(self.playerList[0].getIsAIPlayer): # If the small blind is the user
-            attemptedBet = input(f"Your minimum bet is {minBet//2}, how much would you like to bet?:")
-        while(attemptedBet <= minBet//2):
-            None
+
+        # This logic only runs if the first player is the is the user, otherwise AI logic will be used
+        if not self.playerList[0].getIsAIPlayer():  # If the small blind is the user
+            if(self.playerList[0].getChipStack() < minBet // 2): # If the user cant match the minimum bet, they must go all in
+                print("You dont have enough to be reach required bet, you must go all in.")
+                self.playerList[0].setBet(self.playerList[0].getChipStack())
+            attemptedBet = utils.inputValidation(
+            input(f"Your minimum bet is {minBet//2}, how much would you like to bet?: "), int
+            )   
+            while attemptedBet < minBet // 2:
+                print(f"Your bet must be at least {minBet//2}")
+                attemptedBet = utils.inputValidation(
+                input(f"Your minimum bet is {minBet//2}, how much would you like to bet?: "), int
+                )
+        # If the first player is the AI, the follwing code runs
+        else:
+            
+            
+
+        
+
+        
+
+
 
 
         self.playerList[0].setBet(minBet // 2) # Small blind posts half the minimum bet
@@ -99,6 +122,19 @@ def drawCards(playerList: list, deck : Deck) -> list:
         playerList[i].hand.acceptCard(deck.draw())
 
     return playerList
+
+def kick(playerList: list) -> list:
+    """Remove players with 0 chips from the game by going though the player list and checking their chipstack.
+    Function will return a new list with only players that have money"""
+    remainingPlayers = []
+    for player in playerList:
+        if player.getChipStack() == 0:
+            print(f"{player.getName()} has no money and is kicked from the game")
+        else:
+            remainingPlayers.append(player)
+    return remainingPlayers
+
+
     
 
 

@@ -8,7 +8,7 @@ class AIPlayer(Player):
       """This constructor contains the parent constructor, the parent constructor will be called first
       and then extra variables will be initilized like aggression which regulates how aggresively the aiplayer will bet"""
       super().__init__(name, chipstack) # Calling the parent constructor
-      self.isAIPlayer = True
+      self.isAIPlayer = True     # Setting the isAIPlayer variable to true so the game loop knows this player is an AI
       self.aggression = aggression
 
 
@@ -17,6 +17,12 @@ class AIPlayer(Player):
       1-10 scale with higher numbers meaning more aggressive actions such as
       raising, calling, and going all in"""
       self.aggression = aggression
+
+   def getAggression(self) -> int:
+      """Returns the aggression level of the AI player"""
+      return self.aggression
+   
+   
 
 
 
