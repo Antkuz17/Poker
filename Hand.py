@@ -75,7 +75,7 @@ class Hand:
 
             # Rough psedocode, if yourname > opponenthand for in i in opponent hands
             
-            if ()
+            # if ()
 
 
 
