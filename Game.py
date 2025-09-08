@@ -65,7 +65,7 @@ class game:
                 input(f"Your minimum bet is {minBet//2}, how much would you like to bet?: "), int
                 )
         # If the first player is the AI, the follwing code runs
-        else:
+        # else:
             
             
 

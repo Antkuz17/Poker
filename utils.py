@@ -1,4 +1,7 @@
 import random
+from Hand import Hand
+from CommunityCards import CommunityCards
+from Card import Card
 
 def genRandNum(min, max) -> int:
     """This will return an random integer between min and max inclusive"""
@@ -12,3 +15,11 @@ def inputValidation(attemptedInput, requiredType: type):
                 return value # If it works, return the value
             except ValueError:
                 attemptedInput = input("Invalid input, try again: ") # If it throws a value error, reprompt
+
+
+def evaluateHands(self, hand1 : Hand, hand2 : Hand, comCards: CommunityCards) -> int:
+     """Given two hands, the method will evalute which hand wins. The return value will differ based on the higher hand. If
+     hand1 is higher, 1 is returned, if hand 2 is higher, 2 is returned. If the hands tie, then 0 is returned"""
+
+    
+     
