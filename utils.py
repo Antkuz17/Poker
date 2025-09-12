@@ -34,14 +34,14 @@ def isRoyalFlush(Cards: list) -> bool:
     """Only returns whether there was a royal flush or not, no need to return any other values since RF is the best possible hand.
     Royal Flush: From the 7 cards, there is a 10, J, Q, K, A all of the same suit (e.g. 10♥, J♥, Q♥, K♥, A♥)."""
 
-     #     if isStraightFlush(Cards)[0]: # First check if there is a straight flush
+
     
 
 def isStraightFlush(Cards: list) -> tuple[bool, int]:
     """Returns a boolean depending on whether there was a straight flush or not, and if there was, returns the highest card in the straight flush.
     Straight Flush: From the 7 cards, there are 5 cards in sequence all of the same suit (e.g. 4♠, 5♠, 6♠, 7♠, 8♠). In this case, the high card is 8♠."""
 
-
+    
 
 
 def isFourofKind(Cards: list) -> tuple[bool, int]:
@@ -68,9 +68,32 @@ def isTwoPair(Cards: list) -> tuple[bool, tuple[int, int]]:
     """Returns a boolean depending on whether there was a two pair or not, and if there was, returns the ranks of both pairs."""
 
 
-def isPair(Cards: list) -> tuple[bool, int]:
-    """Returns a boolean depending on whether there was a pair or not, and if there was, returns the rank of the pair."""
 
+def isPair(Cards: list) -> tuple[bool, int]:
+    """
+    Returns a tuple:
+        - First element: True if there is a pair, False otherwise.
+        - Second element: The rank of the pair if found, or -1 if no pair.
+    
+    Args:
+        Cards (list): A list of card objects. Each card must have a getRank() method.
+    
+    Returns:
+        tuple: (bool, int)
+    """
+    rank_counts = {}
+
+    # Count the occurrences of each rank
+    for card in Cards:
+        rank = card.getRank()
+        rank_counts[rank] = rank_counts.get(rank, 0) + 1
+
+    # Check if any rank occurs exactly twice
+    for rank, count in rank_counts.items():
+        if count == 2:
+            return True, rank
+
+    return False, -1
 
 def getHighCard(Cards: list) -> int:
     """Returns the highest card rank from the list of cards."""
