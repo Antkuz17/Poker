@@ -47,3 +47,7 @@ class Player:
         """Returns whether this player is an AI bot or not, used in the main game loop to allow turns to go smoother"""
         return self.isAIPlayer
     
+    def getHand(self) -> list:
+        """Returns the 2 cards the player has within their hand, returns an empty list"""
+        return self.Cards
+    

@@ -16,6 +16,16 @@ class CommunityCards:
         In other words, this method "deals" the flop"""
         for i in range (3):
             self.Cards.append(deck.draw)
+
+    def dealTurn(self, deck: Deck) -> None:
+        """Given a deck, this method will append the top card to the community cards.
+        In other words, this method "deals" the turn"""
+        self.Cards.append(deck.draw())
+
+    def dealRiver(self, deck: Deck) -> None:
+        """Given a deck, this method will append the top card to the community cards.
+        In other words, this method "deals" the river"""
+        self.Cards.append(deck.draw())
         
 
 

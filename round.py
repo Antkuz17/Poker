@@ -5,9 +5,9 @@ from Player import Player
 from AIPlayer import AIPlayer
 import utils
 
-class game:
-    def __init__(self, buyIn, minBet):
-        """This constructor will initilize the game by creating a deck, shuffling the cards, and creating players"""
+class round:
+    def __init__(self, buyIn : int, minInitBet : int, playerList : list):
+        """This constructor will initilize the game by creating a deck and shuffling the cards"""
 
         print("***WELCOME TO POKER***")
 
@@ -51,18 +51,21 @@ class game:
         attemptedBet = 0
         # Start of preflop betting
 
+
+
+
         # This logic only runs if the first player is the is the user, otherwise AI logic will be used
         if not self.playerList[0].getIsAIPlayer():  # If the small blind is the user
-            if(self.playerList[0].getChipStack() < minBet // 2): # If the user cant match the minimum bet, they must go all in
+            if(self.playerList[0].getChipStack() < minInitBet // 2): # If the user cant match the minimum bet, they must go all in
                 print("You dont have enough to be reach required bet, you must go all in.")
                 self.playerList[0].setBet(self.playerList[0].getChipStack())
             attemptedBet = utils.inputValidation(
-            input(f"Your minimum bet is {minBet//2}, how much would you like to bet?: "), int
+            input(f"Your minimum bet is {minInitBet//2}, how much would you like to bet?: "), int
             )   
-            while attemptedBet < minBet // 2:
-                print(f"Your bet must be at least {minBet//2}")
+            while attemptedBet < minInitBet // 2:
+                print(f"Your bet must be at least {minInitBet//2}")
                 attemptedBet = utils.inputValidation(
-                input(f"Your minimum bet is {minBet//2}, how much would you like to bet?: "), int
+                input(f"Your minimum bet is {minInitBet//2}, how much would you like to bet?: "), int
                 )
         # If the first player is the AI, the follwing code runs
         # else:
@@ -76,7 +79,7 @@ class game:
 
 
 
-        self.playerList[0].setBet(minBet // 2) # Small blind posts half the minimum bet
+        self.playerList[0].setBet(minInitBet // 2) # Small blind posts half the minimum bet
 
 
 
@@ -96,16 +99,14 @@ class game:
         
         
 
+"""
+******LATER RANDOMIZE THE AGGRESSION LEVEL OF THE AI PLAYERS******
+"""
 
-
-def createAIPlayers(playerList: list) -> list:
+def createAIPlayers(playerList: list, numPlayers : int) -> list:
     """This method will create 3 AI players and append them to the playerList"""
-    AI1 = AIPlayer("Bot1", utils.genRandNum(100, 500), 5)
-    playerList.append(AI1)
-    AI2 = AIPlayer("Bot2", utils.genRandNum(100, 500), 5)
-    playerList.append(AI2)
-    AI3 = AIPlayer("Bot3", utils.genRandNum(100, 500), 5)
-    playerList.append(AI3)
+    for(i) in range(numPlayers):
+        playerList.append(AIPlayer("Bot" + str(i+1), utils.genRandNum(100, 500), 5))
     return playerList
 
 def newRoundRotation(list: list) -> list:
@@ -142,7 +143,40 @@ def kick(playerList: list) -> list:
 
 
 def main():
-    newGame = game(100, 10)
+
+    # Counts the number of rounds played
+    roundCounter = 1
+
+    print("***WELCOME TO POKER***")
+    print("This is round " + str(roundCounter))
+
+    # Validating that the input is an integer and is positive
+    while(True):
+        numAIPlayers = utils.inputValidation(input("How many players would you like to play against?: "), int)
+        if(numAIPlayers > 0):
+            break
+        else:
+            print("Invalid input, cant have negative")
+
+    # Initializing the list that will hold all players in the game
+    playerList = []
+
+    # Creating the AIplayers and appending them to the playerList
+    playerList = utils.inputValidation(numPlayers, int) 
+
+
+
+    
+
+
+
+
+
+
+
+
+    while(True):
+        newRound = round(100, 10, playerList)
 
 main()
 

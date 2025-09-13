@@ -28,6 +28,10 @@ class Hand:
         """Will clear the hand of all cards"""
         self.Cards.clear()
 
+    def getCards(self) -> list:
+        """Returns the list of cards that make up the hand"""
+        return self.Cards
+
     def getPair(self) -> tuple[bool,str]:
         """Returns two distict values held in a tuple type. The first is a boolean telling whether the hand
         has a pair (pair of 2's, Aces, kings, etc). Second value returns the rank of the pair. If there is no pair,

@@ -1,7 +1,7 @@
 class Card:
 
     # Constructor for card
-    def __init__(self, rank, suit):
+    def __init__(self, rank : str, suit : str):
         self.rank = rank
         self.suit = suit
 
@@ -17,6 +17,6 @@ class Card:
     
     def getRank(self) -> str:
         """Returns the rank of the card as a string (2, 5, J, A, etc)"""
-        return self.rank
+        return [self.rank]
     
     

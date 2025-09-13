@@ -2,6 +2,7 @@ import random
 from Hand import Hand
 from CommunityCards import CommunityCards
 from Card import Card
+from enum import Enum
 
 def genRandNum(min, max) -> int:
     """This will return an random integer between min and max inclusive"""
@@ -76,7 +77,7 @@ def isPair(Cards: list) -> tuple[bool, int]:
         - Second element: The rank of the pair if found, or -1 if no pair.
     
     Args:
-        Cards (list): A list of card objects. Each card must have a getRank() method.
+        Cards (list): A list of card objects. This list consists of the players hand and the community cards (7 objects).
     
     Returns:
         tuple: (bool, int)
@@ -86,17 +87,47 @@ def isPair(Cards: list) -> tuple[bool, int]:
     # Count the occurrences of each rank
     for card in Cards:
         rank = card.getRank()
-        rank_counts[rank] = rank_counts.get(rank, 0) + 1
+        if rank in rank_counts:
+            rank_counts[rank] += 1
+        else:
+            rank_counts[rank] = 1
 
-    # Check if any rank occurs exactly twice
-    for rank, count in rank_counts.items():
-        if count == 2:
-            return True, rank
-
-    return False, -1
+    # Check for pairs (If there are less elements in the dict then in cards, then one of the cards must have been a double)
+    if len(rank_counts) < len(Cards):
+        for rank in rank_counts:
+            if rank_counts[rank]>1:
+                return [True, rank]
+    else:
+        return[False, -1]
+    
 
 def getHighCard(Cards: list) -> int:
     """Returns the highest card rank from the list of cards."""
+
+def rankToNumericalValue(rank:str) -> int:
+    """
+    Returns an int:
+        - This int corresponds to the rank of the card so Ace = 14, Jack = 11, and all number cards hold the same value
+
+    Args:
+        - The rank of said card given as a string
+    """
+# class Ranking(Enum):
+#     "2" = 2
+#     "3" = 3
+#     "4" = 4
+#     "5" = 5
+#     "6" = 6
+#     "7" = 7
+#     "8" = 8
+#     "9" = 9
+#     "10" = 10
+#     "J" = 11
+#     "Q" = 12
+#     "K" = 13
+#     "A" = 14
+
+
 
     
 
