@@ -26,6 +26,7 @@ class Player:
         then the player is all in"""
         self.chipstack -= bet
         self.bet = bet
+        print(self.name + " bets " + str(bet))
         if self.chipstack == 0:
             print(f"{self.name} is all in!")
             self.allIn = True
@@ -50,4 +51,8 @@ class Player:
     def getHand(self) -> list:
         """Returns the 2 cards the player has within their hand, returns an empty list"""
         return self.Cards
+    
+    def getBet(self) -> int:
+        """Returns the current bet of the player as an int"""
+        return self.bet
     

@@ -7,7 +7,7 @@ import utils
 
 class round:
     def __init__(self, minInitBet : int, playerList : list):
-
+        self.minInitBet = minInitBet
         previousBet = 0
         """This constructor will initilize the game by creating a deck and shuffling the cards"""
 
@@ -22,6 +22,7 @@ class round:
         playerList[0].hand.printHand() # Printing the users hand to the terminal for testing purposes
 
         print("Starting round")
+        print("This round will be a 5/10 structure, meaning the small blind is 5 and the big blind is 10. The next person can only raise by double the minimum")
 
         # Clarifying who is small and big blind
         print(self.playerList[0].getName() + " is the small blind")
@@ -32,22 +33,157 @@ class round:
         # Start of preflop betting
 
         # This logic only runs if the first player is the is the user, otherwise AI logic will be used
+        
+        
+        # Small blind logic, differs if the small blind is the AI or the user
         if not self.playerList[0].getIsAIPlayer():  # If the small blind is the user
-            if(self.playerList[0].getChipStack() < minInitBet // 2): # If the user cant match the minimum bet, they must go all in
-                print("You dont have enough to be reach required bet, you must go all in.")
+            if(self.playerList[0].getChipStack() < self.minInitBet // 2): # Small blind is half minInitBet
+                print("You dont have enough to post small blind, you must go all in.")
                 self.playerList[0].setBet(self.playerList[0].getChipStack())
-            attemptedBet = utils.inputValidation(
-            input(f"Your minimum bet is {minInitBet//2}, how much would you like to bet?: "), int
-            )   
-            while attemptedBet < minInitBet // 2:
-                print(f"Your bet must be at least {minInitBet//2}")
-                attemptedBet = utils.inputValidation(
-                input(f"Your minimum bet is {minInitBet//2}, how much would you like to bet?: "), int
-                )
-        # If the first player is the AI, the following code runs
-        # else:
+            else: 
+                self.playerList[0].setBet(self.minInitBet // 2)  # Small blind is 5
+                print("As small blind, " + self.playerList[0].getName() + " posts " + str(self.minInitBet // 2))
+        else: # Logic for when the AI player is small blind
+            if(self.playerList[0].getChipStack() < self.minInitBet // 2):
+                print(self.playerList[0].getName() + " does not have enough to post small blind so they go all in")
+                self.playerList[0].setBet(self.playerList[0].getChipStack())
+            else:
+                self.playerList[0].setBet(self.minInitBet // 2)
+                print("As small blind, " + self.playerList[0].getName() + " posts " + str(self.minInitBet // 2))
 
-        self.playerList[0].setBet(minInitBet // 2) # Small blind posts half the minimum bet
+        # Big blind logic, differs in the same way small blind does
+        if not self.playerList[1].getIsAIPlayer():
+            if(self.playerList[1].getChipStack() < self.minInitBet): # Big blind is minInitBet (10)
+                print("You dont have enough to post big blind, you must go all in.")
+                self.playerList[1].setBet(self.playerList[1].getChipStack())
+            else: 
+                self.playerList[1].setBet(self.minInitBet) # Big blind is 10
+                print("As big blind, " + self.playerList[1].getName() + " posts " + str(self.minInitBet))
+        else: # Logic for when the AI player is big blind
+            if(self.playerList[1].getChipStack() < self.minInitBet):
+                print(self.playerList[1].getName() + " does not have enough to post big blind so they go all in")
+                self.playerList[1].setBet(self.playerList[1].getChipStack())
+            else:
+                self.playerList[1].setBet(self.minInitBet)
+                print("As big blind, " + self.playerList[1].getName() + " posts " + str(self.minInitBet))
+
+        # Add chips to pot from blinds
+        self.pot += self.playerList[0].getBet() + self.playerList[1].getBet()
+
+        # Now start the actual betting round
+        currentBet = self.minInitBet  # Current bet to match (starts at big blind amount)
+        activePlayers = list(range(len(self.playerList)))  # Track who's still in the hand
+        playerToAct = 2  # Start with first player after big blind
+        lastRaiser = 1   # Big blind was the last to "raise" (post blind)
+        bettingComplete = False
+
+        print(f"Preflop betting begins. Current bet to call: ${currentBet}")
+
+        while not bettingComplete and len(activePlayers) > 1:
+            # Skip players who folded
+            if playerToAct not in activePlayers:
+                playerToAct = (playerToAct + 1) % len(self.playerList)
+                continue
+                
+            currentPlayer = self.playerList[playerToAct]
+            
+            # Skip if player already has matching bet (unless action hasn't reached them yet)
+            if currentPlayer.getBet() == currentBet and playerToAct != lastRaiser:
+                playerToAct = (playerToAct + 1) % len(self.playerList)
+                continue
+
+            print(f"Action to {currentPlayer.getName()}")
+            print(f"Current bet: ${currentBet}, Your bet: ${currentPlayer.getBet()}")
+            print(f"You need ${currentBet - currentPlayer.getBet()} to call")
+
+            if not currentPlayer.getIsAIPlayer():  # Human player
+                action = ""
+                while action not in ["fold", "call", "raise"]:
+                    if currentPlayer.getBet() == currentBet:
+                        action = input("Options: fold, check, raise: ").lower()
+                        if action == "check":
+                            action = "call"  # Treat check as call when bet matches
+                    else:
+                        action = input("Options: fold, call, raise: ").lower()
+
+                if action == "fold":
+                    print(f"{currentPlayer.getName()} folds")
+                    activePlayers.remove(playerToAct)
+                    
+                elif action == "call":
+                    callAmount = currentBet - currentPlayer.getBet()
+                    if currentPlayer.getChipStack() <= callAmount:
+                        # All-in call
+                        allInAmount = currentPlayer.getChipStack()
+                        currentPlayer.setBet(currentPlayer.getBet() + allInAmount)
+                        print(f"{currentPlayer.getName()} calls all-in for ${allInAmount}")
+                    else:
+                        currentPlayer.setBet(currentBet)
+                        print(f"{currentPlayer.getName()} calls ${callAmount}")
+                    
+                elif action == "raise":
+                    minRaise = currentBet * 2 - currentPlayer.getBet()  # Minimum raise
+                    maxRaise = currentPlayer.getChipStack() + currentPlayer.getBet()  # All-in
+                    
+                    raiseAmount = utils.inputValidation(
+                        input(f"Raise to (min ${minRaise}, max ${maxRaise}): "), int, "+"
+                    )
+                    
+                    if raiseAmount >= maxRaise:
+                        currentPlayer.setBet(maxRaise)
+                        print(f"{currentPlayer.getName()} raises all-in to ${maxRaise}")
+                    else:
+                        currentPlayer.setBet(raiseAmount)
+                        print(f"{currentPlayer.getName()} raises to ${raiseAmount}")
+                    
+                    currentBet = currentPlayer.getBet()
+                    lastRaiser = playerToAct
+
+            else:  # AI player - simple logic for now
+                callAmount = currentBet - currentPlayer.getBet()
+                
+                if currentPlayer.getChipStack() <= callAmount:
+                    # Must go all-in
+                    allInAmount = currentPlayer.getChipStack()
+                    currentPlayer.setBet(currentPlayer.getBet() + allInAmount)
+                    print(f"{currentPlayer.getName()} calls all-in for ${allInAmount}")
+                    
+                elif callAmount == 0:
+                    # Can check
+                    print(f"{currentPlayer.getName()} checks")
+                    
+                else:
+                    # Simple AI: call 70% of time, fold 30%
+                    import random
+                    if random.random() < 0.7:
+                        currentPlayer.setBet(currentBet)
+                        print(f"{currentPlayer.getName()} calls ${callAmount}")
+                    else:
+                        print(f"{currentPlayer.getName()} folds")
+                        activePlayers.remove(playerToAct)
+
+            # Move to next player
+            playerToAct = (playerToAct + 1) % len(self.playerList)
+            
+            # Check if betting round is complete
+            if playerToAct == lastRaiser or len(activePlayers) <= 1:
+                bettingComplete = True
+
+        # Calculate final pot
+        for player in self.playerList:
+            self.pot += player.getBet()
+            player.subtractFromChipStack(player.getBet())  # Remove bet from their chip stack
+
+        print(f"\nPreflop betting complete!")
+        print(f"Total pot: ${self.pot}")
+        print(f"Players remaining: {[self.playerList[i].getName() for i in activePlayers]}")
+        
+        # Store active players for next betting rounds
+        self.activePlayers = activePlayers
+
+
+
+
 
         # # Positions on the table will be based on the index of the player in the playerList list (e.g index 0 = position 1)
         
@@ -129,37 +265,15 @@ def main():
         playerList.append(AIPlayer(f"Bot {i+1}", utils.genRandNum(200, 600), 5))
         print(playerList[i+1].getName() + f" has joined the game with ${playerList[i+1].getChipStack()}")
 
-
-    while(True):
-        playerList = kick(playerList)
-        if len(playerList) < 2:
-            print(f"{playerList[0].getName()} is the last player remaining and wins the game!")
-            break
-        print(f"This is round {roundCounter}, lets begin !!!!")
+    newRound = round(5, playerList)
+    # while(True):
+    #     playerList = kick(playerList)
+    #     if len(playerList) < 2:
+    #         print(f"{playerList[0].getName()} is the last player remaining and wins the game!")
+    #         break
+    #     print(f"This is round {roundCounter}, lets begin !!!!")
         
-        newRound = round(5, playerList)
-
-
-
-    # Creating the AIplayers and appending them to the playerList
-    playerList = utils.inputValidation(numAIPlayers, int)
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-    while(True):
-        newRound = round(100, 10, playerList)
+        
 
 main()
 
