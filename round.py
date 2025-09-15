@@ -9,14 +9,10 @@ class round:
     def __init__(self, buyIn : int, minInitBet : int, playerList : list):
         """This constructor will initilize the game by creating a deck and shuffling the cards"""
 
-        print("***WELCOME TO POKER***")
-
         self.pot = 0 # Before betting begins, the pot is set to 0
 
         self.deck = Deck() # Creating the Deck object that belongs to the game class
         self.deck.shuffleCards() # Shuffling all the cards in said deck
-
-        self.playerList = []
 
         userName = input("What is your name?: ")
         money = input("How much money do you have?: ")
@@ -104,7 +100,10 @@ class round:
 """
 
 def createAIPlayers(playerList: list, numPlayers : int) -> list:
-    """This method will create 3 AI players and append them to the playerList"""
+    """This method will create 3 AI players and append them to the playerList, it will then return the new list
+    
+    The AI players will have a random amount of money between 100-500 and an aggression level of 5
+    """
     for(i) in range(numPlayers):
         playerList.append(AIPlayer("Bot" + str(i+1), utils.genRandNum(100, 500), 5))
     return playerList
@@ -148,6 +147,17 @@ def main():
     roundCounter = 1
 
     print("***WELCOME TO POKER***")
+
+    userName = input("What is your name?: ")
+    money = input("How much money do you have?: ")
+
+    money = utils.inputValidation(money, int, "+") # Validating that the input is an integer keeps reprompting till the input is valid
+
+    print(f"Hello, your name is {userName} and you are starting out with ${money}, goodluck!") # Delete this later
+
+    #playerList.append(Player(userName, money)) # For texting purposes the player will start as the first player/small blind
+
+    
     print("This is round " + str(roundCounter))
 
     # Validating that the input is an integer and is positive
@@ -162,7 +172,10 @@ def main():
     playerList = []
 
     # Creating the AIplayers and appending them to the playerList
-    playerList = utils.inputValidation(numPlayers, int) 
+    playerList = utils.inputValidation(numAIPlayers, int)
+
+
+
 
 
 

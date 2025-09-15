@@ -8,12 +8,22 @@ def genRandNum(min, max) -> int:
     """This will return an random integer between min and max inclusive"""
     return (random.randint(min, max))
 
-def inputValidation(attemptedInput, requiredType: type):
-    """Uses a validation loop to continue reprompting the user until their input matches the type provided"""
+def inputValidation(attemptedInput, requiredType: type, sign: str) -> any:
+    """Uses a validation loop to continue reprompting the user until their input matches the type provided, then returns the value
+    You can also enter + and - data to indicate whether the number must be positive or negative
+    """
     while True:
             try:
-                value =requiredType(attemptedInput) # Tries to cast the input to the type required
-                return value # If it works, return the value
+                attemptedInput =requiredType(attemptedInput) # Tries to cast the input to the type required
+                if requiredType == int and sign == "+":
+                    if attemptedInput < 0:
+                        attemptedInput = int(input("Invalid input, try again: "))
+                        continue
+                elif requiredType == int and sign == "-":
+                    if attemptedInput > 0:
+                        attemptedInput = int(input("Invalid input, try again: "))
+                        continue
+                return attemptedInput # If it works, return the value
             except ValueError:
                 attemptedInput = input("Invalid input, try again: ") # If it throws a value error, reprompt
 
