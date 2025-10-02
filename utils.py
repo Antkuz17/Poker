@@ -16,11 +16,11 @@ def inputValidation(attemptedInput, requiredType: type, sign: str) -> any:
             try:
                 attemptedInput =requiredType(attemptedInput) # Tries to cast the input to the type required
                 if requiredType == int and sign == "+":
-                    if attemptedInput < 0:
+                    if attemptedInput <= 0:
                         attemptedInput = int(input("Invalid input, try again: "))
                         continue
                 elif requiredType == int and sign == "-":
-                    if attemptedInput > 0:
+                    if attemptedInput >= 0:
                         attemptedInput = int(input("Invalid input, try again: "))
                         continue
                 return attemptedInput # If it works, return the value

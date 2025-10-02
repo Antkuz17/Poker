@@ -10,7 +10,6 @@ class Card:
         return(f"{self.rank} of {self.suit}")
     
     # Getters and Setters
-
     def getSuit(self) -> str:
         """Returns the suit of the card as a string"""
         return self.suit

@@ -2,13 +2,13 @@ from Hand import Hand
 
 class Player:
     def __init__(self, name: str, chipstack: int) -> None:
-        self.name = name
-        self.chipstack = chipstack
-        self.hand = Hand()
-        self.bet = 0
-        self.fold = False
-        self.isAIPlayer = False
-        self.allIn = False
+        self.name = name # Name of the player
+        self.chipstack = chipstack # Amount of chips the player has
+        self.hand = Hand() # The hand object that contains the 2 cards the player has
+        self.bet = 0 # The current bet of the player
+        self.fold = False # Whether the player has folded or not
+        self.isAIPlayer = False # Whether this player is an AI bot or not
+        self.allIn = False # Whether the player is all in or not
         
 
     # Getters and Setters
@@ -26,9 +26,7 @@ class Player:
         then the player is all in"""
         self.chipstack -= bet
         self.bet = bet
-        print(self.name + " bets " + str(bet))
         if self.chipstack == 0:
-            print(f"{self.name} is all in!")
             self.allIn = True
 
     
@@ -55,4 +53,8 @@ class Player:
     def getBet(self) -> int:
         """Returns the current bet of the player as an int"""
         return self.bet
+    
+    def getFoldStatus(self) -> bool:
+        """Returns whether the player has folded or not as a boolean"""
+        return self.fold
     
