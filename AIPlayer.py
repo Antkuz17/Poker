@@ -2,6 +2,19 @@ from Card import Card
 from Hand import Hand
 from Player import Player
 import random
+
+"""
+AIPlayer.py
+
+This module contains the 'AIPlayer' class which represents an AI controlled poker player
+This is the child class of the Player class with added functionality for AI behavior
+
+This module includes methods for
+- Setting and getting the aggression level of the AI player
+- AI decision making for betting, folding, calling, and raising // Not done
+"""
+
+
 class AIPlayer(Player):
 
    def __init__(self, name: str, chipstack: int, aggression: int):

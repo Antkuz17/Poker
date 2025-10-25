@@ -7,6 +7,22 @@ import utils
 import random 
 from CommunityCards import CommunityCards
 
+"""
+round.py
+
+This module contains the 'Hand' class which represents a poker hand
+Each hand has a list of card objects that make up the hand which is stored in the 'Cards[]' array
+
+This module includes methods for
+- Accepting a card into the hand
+- Printing the hand to terminal 
+- Getting the first and second card in the hand
+- Clearing the hand of all cards
+- Getting the list of cards that make up the hand
+- Checking if the hand is a pair
+- Checking if the hand is suited
+"""
+
 class round:
     
     def __init__(self, playerList : list, bb: int, sb: int, userPosition: int) -> None:
@@ -519,51 +535,4 @@ def kick(playerList: list) -> list:
     
 
 
-
-
-
-def main():
-
-    # Counts the number of rounds played
-    roundCounter = 1
-
-    print("***WELCOME TO POKER***")
-
-    userName = input("What is your name?: ")
-
-    print(f"Hello, your name is {userName} and you will be playing a $1/0.5 game with a starting stack of $100")
-
-    # Declaring the list that will hold all players in the game
-    playerList = []
-
-    playerList.append(Player(userName, 100)) # For simplicity/testing purposes the player will start as the first player/small blind
-
-    # Validating and getting the number of players from the AI
-    numAIPlayers = utils.inputValidation(input("How many players would you like to play against?: "), int, "+")
-
-    # For that will create the AI players and add them to the player list (default money will generate between 200 and 600 and default aggresion is 5)
-    for i in range(numAIPlayers):
-        playerList.append(AIPlayer(f"Bot {i+1}", 100, 5))
-        print(playerList[i+1].getName() + f" has joined the game with ${playerList[i+1].getChipStack()}")
-
-    # User will always be in position 1, so the first player in the list, however after every round the list and positions will be rotated
-    userPosition = 0 
-
-    newRound = round(playerList, 1, 0.5, userPosition)
-    newRound.playPreFlop()
-    newRound.playFlop()
-    # newRound.playTurn()
-    # newRound.playRiver()
-    # newRound.playShowdown()
-
-    # while(True):
-    #     playerList = kick(playerList)
-    #     if len(playerList) < 2:
-    #         print(f"{playerList[0].getName()} is the last player remaining and wins the game!")
-    #         break
-    #     print(f"This is round {roundCounter}, lets begin !!!!")
-        
-        
-
-main()
 

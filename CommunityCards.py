@@ -1,6 +1,17 @@
 from Card import Card
 from Deck import Deck
 
+"""
+communityCards.py
+
+This module contains the 'CommunityCards' class which represents the community cards in a poker game
+Each community cards object has a list of card objects that make up the community cards which is stored in the 'Cards[]' array
+
+This module includes methods for
+- Printing the community cards to terminal
+- Dealing the flop, turn, and river from a given deck
+"""
+
 class CommunityCards:
     def __init__(self) -> None:
         """Constructor for community cards class which stores cards as an list"""

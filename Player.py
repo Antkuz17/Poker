@@ -1,5 +1,18 @@
 from Hand import Hand
 
+"""
+player.py
+
+This module contains the 'Player' class which represents a poker player
+Each player has a name, chipstack, hand, current bet, and fold status 
+
+This module includes methods for
+- Setting and getting the player's name
+- Setting and getting the player's chipstack
+- Setting and getting the player's current bet
+- Setting and getting the player's fold status
+"""
+
 class Player:
     def __init__(self, name: str, chipstack: int) -> None:
         self.name = name # Name of the player

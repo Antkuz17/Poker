@@ -13,7 +13,9 @@ Mostly used for simplity of code and import orginization
 This module includes methods for
 - Generating random number
 - Input Validations that validates a users input is of a valid type
-- Hand Evaluation
+- Hand Evaluation functions that compare two hands given the community cards // Not done
+- Boolean methods for each poker hand type // Not done
+- Rank to numerical value conversion  // Not done
 """
 
 def genRandNum(min, max) -> int:

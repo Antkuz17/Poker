@@ -1,5 +1,22 @@
 from Card import Card
 from Deck import Deck
+
+"""
+hand.py
+
+This module contains the 'Hand' class which represents a poker hand
+Each hand has a list of card objects that make up the hand which is stored in the 'Cards[]' array
+
+This module includes methods for
+- Accepting a card into the hand
+- Printing the hand to terminal 
+- Getting the first and second card in the hand
+- Clearing the hand of all cards
+- Getting the list of cards that make up the hand
+- Checking if the hand is a pair
+- Checking if the hand is suited
+"""
+
 class Hand:
 
     # Constructor
@@ -53,7 +70,6 @@ class Hand:
             return[False, None]
 
     # The following methods are the calculation methods used to determine the strength of a hand and win percentages
-
     def preFlopCalc(self, numTrials: int, numOpponenets: int) -> float:
         """Using monte carlo simulation, will estimate the strength of the hand and output a decimal between 0-1 
         with 1 being the a very strong hand and 0 being a very weak hand
