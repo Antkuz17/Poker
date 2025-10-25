@@ -4,6 +4,18 @@ from CommunityCards import CommunityCards
 from Card import Card
 from enum import Enum
 
+"""
+utils.py
+
+This module contains a variety of utility methods used in other classes/modules
+Mostly used for simplity of code and import orginization 
+
+This module includes methods for
+- Generating random number
+- Input Validations that validates a users input is of a valid type
+- Hand Evaluation
+"""
+
 def genRandNum(min, max) -> int:
     """This will return an random integer between min and max inclusive"""
     return (random.randint(min, max))

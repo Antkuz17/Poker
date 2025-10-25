@@ -1,3 +1,17 @@
+"""
+card.py
+
+This module contains the 'Card' class which represents one playing card
+
+Each playing card has a rank ('A', '2', '3', 'K', '4') and a suit ('Hearts', 'Spades', 'Diamonds', 'Clubs')
+
+This class includes methods for
+- Displaying you the card using the default python print 
+- Getting the rank and suit of a given card
+
+"""
+
+
 class Card:
 
     # Constructor for card
