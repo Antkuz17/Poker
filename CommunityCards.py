@@ -21,6 +21,14 @@ class CommunityCards:
         """Prints all of the current community cards to the terminal"""
         for Card in self.Cards:
             print(Card)
+
+    def getCommunityCards(self) -> list:
+        """Returns the list of all community cards"""
+        return self.Cards
+
+    def clearCards(self) -> None:
+        """Clears all community cards for a new round"""
+        self.Cards = []
     
     def dealFlop(self, deck: Deck) -> None:
         """Given a deck, this method will append the top three cards to the community cards.

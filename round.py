@@ -6,6 +6,7 @@ from AIPlayer import AIPlayer
 import utils
 import random 
 from CommunityCards import CommunityCards
+from HandEvaluator import HandEvaluator
 
 """
 round.py
@@ -25,7 +26,7 @@ This module includes methods for
 
 class round:
     
-    def __init__(self, playerList : list, bb: int, sb: int, userPosition: int) -> None:
+    def __init__(self, playerList : list, bb: float, sb: float) -> None:
         """This constructor will initilize the round by creating a deck and shuffling the cards"""
         self.previousBet = 0
         self.playerList = playerList 
@@ -34,7 +35,6 @@ class round:
         self.bb = bb # Big blind
         self.sb = sb # Small blind
         self.deck.shuffleCards() # Shuffling all the cards in said deck
-        self.userPosition = userPosition # The position of the user in the table
         self.communityCards = CommunityCards() # List that will hold the community cards
 
 
@@ -46,490 +46,463 @@ class round:
         print("Starting Preflop Logic")
         print("======================================\n")
 
-        # Drawing 2 cards for each player and appending them to their hand
-        drawCards(self.playerList, self.deck)
+        # Giving each player 2 cards
+        self._dealHoleCards()
 
-        # Showing the human player their cards
+        # Show human player their cards
         print(f"Your hand is: {self.playerList[0].hand.firstCard()} and {self.playerList[0].hand.secondCard()}")
 
+        # Printing round introduction
         print("\nStarting round")
-        print("This round will be a 1/0.5 structure, meaning the small blind is $0.5 and the big blind is $1.")
+        print(f"This round will be a {self.bb}/{self.sb} structure")
         print("The minimum raise is double the previous bet\n")
 
-        # Clarifying who is small and big blind
-        print(self.playerList[0].getName() + " is the small blind")
-        print(self.playerList[1].getName() + " is the big blind")
+        # Printing positions
+        print(f"{self.playerList[0].getName()} is the small blind")
+        print(f"{self.playerList[1].getName()} is the big blind")
         for i in range(2, len(self.playerList)):
-            print(self.playerList[i].getName() + " is a regular player")
-        
+            print(f"{self.playerList[i].getName()} is a regular player")
         print()
 
-        # Start of preflop betting - posting blinds
-        # Small blind posts their forced bet
-        self.playerList[0].setBet(self.sb)
-        print(self.playerList[0].getName() + " posts small blind: $" + str(self.sb))
-
-        # Big blind posts their forced bet
-        self.playerList[1].setBet(self.bb)
-        print(self.playerList[1].getName() + " posts big blind: $" + str(self.bb))
-
-        # Adding blinds to the pot
-        self.pot += self.playerList[0].getBet() + self.playerList[1].getBet()
-        print("Pot: $" + str(self.pot) + "\n")
-
-        # The current bet to match is the big blind
-        self.previousBet = self.bb
+        # Post blinds
+        self._postBlinds()
         
-        # Track the last player to raise (used to know when betting round is complete)
-        lastRaiserIndex = 1  # Start with big blind as last raiser
-        
-        # Keep track of who has acted this round
-        playersActed = [False] * len(self.playerList)
-        playersActed[0] = False  # Small blind needs to act again if there's a raise
-        playersActed[1] = False  # Big blind needs to act again if there's a raise
-        
-        # Betting continues until all active players have matched the current bet
-        currentPlayerIndex = 2  # Start with player after big blind
-        
-        # Continue betting until we circle back to the last raiser
-        while True:
-            # Get the current player
-            player = self.playerList[currentPlayerIndex]
-            
-            # Skip if player has folded
-            if player.getFoldStatus():
-                currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-                # Check if we've completed the round (back to last raiser)
-                if currentPlayerIndex == (lastRaiserIndex + 1) % len(self.playerList):
-                    break
-                continue
-            
-            # Skip if player has already matched the current bet and no one raised after them
-            if playersActed[currentPlayerIndex] and player.getBet() == self.previousBet:
-                currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-                # Check if we've completed the round
-                if currentPlayerIndex == (lastRaiserIndex + 1) % len(self.playerList):
-                    break
-                continue
-            
-            # Calculate how much the player needs to call
-            amountToCall = self.previousBet - player.getBet()
-            
-            print(f"\n{player.getName()}'s turn (current bet: ${player.getBet()}, needs ${amountToCall} to call)")
-            
-            # Handle AI player action
-            if player.getIsAIPlayer():
-                # Generate random number to determine AI action
-                num = random.randint(1, 9)
-                
-                # 40% chance to call
-                if num <= 4:
-                    player.setBet(self.previousBet)
-                    self.pot += amountToCall
-                    playersActed[currentPlayerIndex] = True
-                    print(f"{player.getName()} calls ${amountToCall}")
-                
-                # 10% chance to raise
-                elif num == 5:
-                    raiseAmount = self.previousBet * 2
-                    additionalAmount = raiseAmount - player.getBet()
-                    player.setBet(raiseAmount)
-                    self.pot += additionalAmount
-                    self.previousBet = raiseAmount
-                    lastRaiserIndex = currentPlayerIndex
-                    playersActed[currentPlayerIndex] = True
-                    # Reset acted status for players before this one (they need to respond to raise)
-                    for i in range(len(playersActed)):
-                        if i != currentPlayerIndex:
-                            playersActed[i] = False
-                    print(f"{player.getName()} raises to ${raiseAmount}")
-                
-                # 50% chance to fold
-                else:
-                    player.setFoldStatus(True)
-                    playersActed[currentPlayerIndex] = True
-                    print(f"{player.getName()} folds")
-            
-            # Handle human player action
-            else:
-                validAction = False
-                while not validAction:
-                    # Prompt for action
-                    action = input(f"Fold, call ${amountToCall}, or raise? (f/c/r): ").lower()
-                    
-                    # Handle fold
-                    if action == "f" or action == "fold":
-                        player.setFoldStatus(True)
-                        playersActed[currentPlayerIndex] = True
-                        print(f"{player.getName()} folds")
-                        validAction = True
-                    
-                    # Handle call
-                    elif action == "c" or action == "call":
-                        player.setBet(self.previousBet)
-                        self.pot += amountToCall
-                        playersActed[currentPlayerIndex] = True
-                        print(f"{player.getName()} calls ${amountToCall}")
-                        validAction = True
-                    
-                    # Handle raise
-                    elif action == "r" or action == "raise":
-                        minimumRaise = self.previousBet * 2
-                        raiseAmount = utils.inputValidation(
-                            input(f"Raise to (minimum ${minimumRaise}): "), 
-                            int, 
-                            "+"
-                        )
-                        
-                        # Validate raise amount
-                        if raiseAmount < minimumRaise:
-                            print(f"Raise amount must be at least ${minimumRaise} (double the current bet)")
-                        else:
-                            additionalAmount = raiseAmount - player.getBet()
-                            player.setBet(raiseAmount)
-                            self.pot += additionalAmount
-                            self.previousBet = raiseAmount
-                            lastRaiserIndex = currentPlayerIndex
-                            playersActed[currentPlayerIndex] = True
-                            # Reset acted status for players before this one
-                            for i in range(len(playersActed)):
-                                if i != currentPlayerIndex:
-                                    playersActed[i] = False
-                            print(f"{player.getName()} raises to ${raiseAmount}")
-                            validAction = True
-                    
-                    # Invalid input
-                    else:
-                        print("Invalid input. Please enter 'f' (fold), 'c' (call), or 'r' (raise)")
-            
-            # Show current pot after each action
-            print(f"Pot: ${self.pot}")
-            
-            # Move to next player
-            currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-            
-            # Check if we've completed the betting round
-            # Round is complete when we return to the player after the last raiser
-            # and all active players have acted and matched the bet
-            if currentPlayerIndex == (lastRaiserIndex + 1) % len(self.playerList):
-                allMatched = True
-                for i, player in enumerate(self.playerList):
-                    if not player.getFoldStatus() and (not playersActed[i] or player.getBet() != self.previousBet):
-                        allMatched = False
-                        break
-                if allMatched:
-                    break
+        # Run pre-flop betting
+        self._runBettingRound(startIndex=2)
         
         print("\n======================================")
         print("Preflop betting round complete")
         print(f"Final pot: ${self.pot}")
         print("======================================\n")
-        
 
+
+        
     def playFlop(self) -> None:
         """Handles the flop betting round logic"""
         
-        print("\n======================================")
+        # Check if only one player remains (everyone else folded)
+        if self._countActivePlayers() <= 1:
+            print("All other players have folded!")
+            return
+        
+        print("======================================")
         print("Starting Flop")
         print("======================================\n")
         
-        # Check if only one player remains (everyone else folded)
-        activePlayers = [p for p in self.playerList if not p.getFoldStatus()]
-        if len(activePlayers) == 1:
-            print(f"{activePlayers[0].getName()} wins by default (all others folded)!")
-            activePlayers[0].setChipStack(activePlayers[0].getChipStack() + self.pot)
-            print(f"{activePlayers[0].getName()} wins ${self.pot}")
-            return
-        
-        # Deal the flop
-        print("Dealing the Flop...")
+        # Burn one card and deal 3 community cards
+        self.deck.draw()  # Burn card
         self.communityCards.dealFlop(self.deck)
+        
+        # Display community cards
         self.communityCards.printCommunityCards()
         print()
         
-        # Reset all player bets for this new betting round
+        # Reset bets for new betting round
+        self.previousBet = 0
         for player in self.playerList:
             player.setBet(0)
         
-        # Reset current bet amount for the new round
-        self.previousBet = 0
-        
-        # Track who has acted this round
-        hasActed = [False] * len(self.playerList)
-        
-        # Post-flop betting starts with small blind (position 0)
-        currentPlayerIndex = 0
-        
-        # Find first active player to start betting
-        while self.playerList[currentPlayerIndex].getFoldStatus():
-            currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-        
-        firstPlayerIndex = currentPlayerIndex
-        
-        # Main Betting loop
-        while True:
-            player = self.playerList[currentPlayerIndex]
-            
-            # Skip folded players
-            if player.getFoldStatus():
-                hasActed[currentPlayerIndex] = True
-                currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-                continue
-            
-            # Check if betting round is complete
-            # Round ends when all active players have acted and matched the current bet or folded
-            allDone = True
-            for i, p in enumerate(self.playerList):
-                if not p.getFoldStatus():
-                    if not hasActed[i] or p.getBet() != self.previousBet:
-                        allDone = False
-                        break
-            
-            if allDone:
-                break
-            
-            # Skip if player already matched current bet and has acted
-            if hasActed[currentPlayerIndex] and player.getBet() == self.previousBet:
-                currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
-                continue
-            
-            # Calculate amount to call
-            amountToCall = self.previousBet - player.getBet()
-            
-            print(f"\n{player.getName()}'s turn (Stack: ${player.getChipStack()}, Current bet: ${player.getBet()}, Pot: ${self.pot})")
-            
-            # AI Player logic
-            if player.getIsAIPlayer():
-                num = random.randint(1, 10)
-                
-                # If there's no bet yet, AI can check or bet
-                if self.previousBet == 0:
-                    if num <= 6:  # Check (60%)
-                        print(f"{player.getName()} checks")
-                    elif num <= 8:  # Bet (20%)
-                        betAmount = self.bb  # Bet one big blind
-                        if player.getChipStack() >= betAmount:
-                            player.setChipStack(player.getChipStack() - betAmount)
-                            player.setBet(betAmount)
-                            self.pot += betAmount
-                            self.previousBet = betAmount
-                            # Reset acted status for other players
-                            for i in range(len(hasActed)):
-                                if i != currentPlayerIndex:
-                                    hasActed[i] = False
-                            print(f"{player.getName()} bets ${betAmount}")
-                        else:
-                            print(f"{player.getName()} checks (not enough chips to bet)")
-                    else:  # Fold (20%)
-                        player.setFoldStatus(True)
-                        print(f"{player.getName()} folds")
-                
-                # If there's a bet to call
-                else:
-                    if num <= 4:  # Call (40%)
-                        if player.getChipStack() >= amountToCall:
-                            player.setChipStack(player.getChipStack() - amountToCall)
-                            player.setBet(self.previousBet)
-                            self.pot += amountToCall
-                            print(f"{player.getName()} calls ${amountToCall}")
-                        else:
-                            player.setFoldStatus(True)
-                            print(f"{player.getName()} folds (not enough chips)")
-                    
-                    elif num <= 5:  # Raise (10%)
-                        raiseAmount = self.previousBet * 2
-                        additionalAmount = raiseAmount - player.getBet()
-                        if player.getChipStack() >= additionalAmount:
-                            player.setChipStack(player.getChipStack() - additionalAmount)
-                            player.setBet(raiseAmount)
-                            self.pot += additionalAmount
-                            self.previousBet = raiseAmount
-                            # Reset acted status
-                            for i in range(len(hasActed)):
-                                if i != currentPlayerIndex:
-                                    hasActed[i] = False
-                            print(f"{player.getName()} raises to ${raiseAmount}")
-                        else:
-                            # Not enough to raise, just call if possible
-                            if player.getChipStack() >= amountToCall:
-                                player.setChipStack(player.getChipStack() - amountToCall)
-                                player.setBet(self.previousBet)
-                                self.pot += amountToCall
-                                print(f"{player.getName()} calls ${amountToCall}")
-                            else:
-                                player.setFoldStatus(True)
-                                print(f"{player.getName()} folds (not enough chips)")
-                    
-                    else:  # Fold (50%)
-                        player.setFoldStatus(True)
-                        print(f"{player.getName()} folds")
-                
-                hasActed[currentPlayerIndex] = True
-            
-            # Human player logic
-            else:
-                validAction = False
-                while not validAction:
-                    # If no bet, player can check or bet
-                    if self.previousBet == 0:
-                        action = input(f"Check, bet, or fold? (ch/b/f): ").lower()
-                        
-                        if action in ["ch", "check"]:
-                            print(f"{player.getName()} checks")
-                            validAction = True
-                        
-                        elif action in ["b", "bet"]:
-                            minimumBet = self.bb
-                            betAmount = utils.inputValidation(
-                                input(f"Bet amount (minimum ${minimumBet}): "),
-                                int,
-                                "+"
-                            )
-                            
-                            if betAmount < minimumBet:
-                                print(f"Bet must be at least ${minimumBet}")
-                            elif player.getChipStack() < betAmount:
-                                print(f"Not enough chips! You only have ${player.getChipStack()}")
-                            else:
-                                player.setChipStack(player.getChipStack() - betAmount)
-                                player.setBet(betAmount)
-                                self.pot += betAmount
-                                self.previousBet = betAmount
-                                # Reset acted status
-                                for i in range(len(hasActed)):
-                                    if i != currentPlayerIndex:
-                                        hasActed[i] = False
-                                print(f"{player.getName()} bets ${betAmount}")
-                                validAction = True
-                        
-                        elif action in ["f", "fold"]:
-                            player.setFoldStatus(True)
-                            print(f"{player.getName()} folds")
-                            validAction = True
-                        
-                        else:
-                            print("Invalid input. Please enter 'ch' (check), 'b' (bet), or 'f' (fold)")
-                    
-                    # If there's a bet to match
-                    else:
-                        action = input(f"Call ${amountToCall}, raise, or fold? (c/r/f): ").lower()
-                        
-                        if action in ["c", "call"]:
-                            if player.getChipStack() < amountToCall:
-                                print(f"Not enough chips! You only have ${player.getChipStack()}")
-                                continue
-                            player.setChipStack(player.getChipStack() - amountToCall)
-                            player.setBet(self.previousBet)
-                            self.pot += amountToCall
-                            print(f"{player.getName()} calls ${amountToCall}")
-                            validAction = True
-                        
-                        elif action in ["r", "raise"]:
-                            minimumRaise = self.previousBet * 2
-                            raiseAmount = utils.inputValidation(
-                                input(f"Raise to (minimum ${minimumRaise}): "),
-                                int,
-                                "+"
-                            )
-                            
-                            if raiseAmount < minimumRaise:
-                                print(f"Raise must be at least ${minimumRaise}")
-                            else:
-                                additionalAmount = raiseAmount - player.getBet()
-                                if player.getChipStack() < additionalAmount:
-                                    print(f"Not enough chips! You only have ${player.getChipStack()}")
-                                    continue
-                                
-                                player.setChipStack(player.getChipStack() - additionalAmount)
-                                player.setBet(raiseAmount)
-                                self.pot += additionalAmount
-                                self.previousBet = raiseAmount
-                                # Reset acted status
-                                for i in range(len(hasActed)):
-                                    if i != currentPlayerIndex:
-                                        hasActed[i] = False
-                                print(f"{player.getName()} raises to ${raiseAmount}")
-                                validAction = True
-                        
-                        elif action in ["f", "fold"]:
-                            player.setFoldStatus(True)
-                            print(f"{player.getName()} folds")
-                            validAction = True
-                        
-                        else:
-                            print("Invalid input. Please enter 'c' (call), 'r' (raise), or 'f' (fold)")
-                
-                hasActed[currentPlayerIndex] = True
-            
-            print(f"Pot: ${self.pot}")
-            
-            # Move to next player
-            currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
+        # Run flop betting (start with small blind - index 0)
+        self._runBettingRound(startIndex=0)
         
         print("\n======================================")
         print("Flop betting round complete")
         print(f"Final pot: ${self.pot}")
         print("======================================\n")
-
-
-
-
-
-
-
-        
-
+    
     def playTurn(self) -> None:
         """Handles the turn betting round logic"""
-        pass    
-
+        
+        # Check if only one player remains
+        if self._countActivePlayers() <= 1:
+            print("All other players have folded!")
+            return
+        
+        print("======================================")
+        print("Starting Turn")
+        print("======================================\n")
+        
+        # Burn one card and deal 1 community card
+        self.deck.draw()  # Burn card
+        self.communityCards.dealTurn(self.deck)
+        
+        # Display community cards
+        self.communityCards.printCommunityCards()
+        print()
+        
+        # Reset bets for new betting round
+        self.previousBet = 0
+        for player in self.playerList:
+            player.setBet(0)
+        
+        # Run turn betting
+        self._runBettingRound(startIndex=0)
+        
+        print("\n======================================")
+        print("Turn betting round complete")
+        print(f"Final pot: ${self.pot}")
+        print("======================================\n")
+    
     def playRiver(self) -> None:
         """Handles the river betting round logic"""
-        pass
-
-    def playShowdown(self) -> None:
-        """Handles the showdown logic where players reveal their hands and the winner is determined"""
-        pass
-
         
-
-
+        # Check if only one player remains
+        if self._countActivePlayers() <= 1:
+            print("All other players have folded!")
+            return
         
-
-
-
-def createAIPlayers(playerList: list, numPlayers : int) -> list:
-    """This method will create 3 AI players and append them to the playerList, it will then return the new list
+        print("======================================")
+        print("Starting River")
+        print("======================================\n")
+        
+        # Burn one card and deal 1 community card
+        self.deck.draw()  # Burn card
+        self.communityCards.dealRiver(self.deck)
+        
+        # Display community cards
+        self.communityCards.printCommunityCards()
+        print()
+        
+        # Reset bets for new betting round
+        self.previousBet = 0
+        for player in self.playerList:
+            player.setBet(0)
+        
+        # Run river betting
+        self._runBettingRound(startIndex=0)
+        
+        print("\n======================================")
+        print("River betting round complete")
+        print(f"Final pot: ${self.pot}")
+        print("======================================\n")
     
-    The AI players will have a random amount of money between 100-500 and an aggression level of 5
-    """
-    for(i) in range(numPlayers):
-        playerList.append(AIPlayer("Bot" + str(i+1), utils.genRandNum(100, 500), 5))
-    return playerList
-
-def newRoundRotation(list: list) -> list:
-    """This method is used to "rotate" the index of the playerList order. This means that whatever player was in position
-    1 will be in position 2 and position 4 will now be 1"""
-    P4 = list.pop()
-    list.insert(0, P4)
-    return list
-
-def drawCards(playerList: list, deck : Deck) -> None:
-    """Will draw 2 cards per player and will append those to each players hand, no return value since the playerList is passed by reference"""
-    for i in range(len(playerList)): # For each player
-        playerList[i].hand.acceptCard(deck.draw())
-        playerList[i].hand.acceptCard(deck.draw())
-
-def kick(playerList: list) -> list:
-    """Remove players with 0 chips from the game by going though the player list and checking their chipstack.
-    Function will return a new list with only players that have money"""
-    remainingPlayers = []
-    for player in playerList:
-        if player.getChipStack() == 0:
-            print(f"{player.getName()} has no money and is kicked from the game")
+    def playShowdown(self) -> None:
+        """Handles the showdown logic where players reveal hands and winner is determined"""
+        
+        print("======================================")
+        print("SHOWDOWN")
+        print("======================================\n")
+        
+        # Get all players who haven't folded
+        activePlayers = [p for p in self.playerList if not p.getFoldStatus()]
+        
+        if len(activePlayers) == 1:
+            # Only one player left - they win by default
+            winner = activePlayers[0]
+            print(f"{winner.getName()} wins the pot of ${self.pot} (everyone else folded)")
+            winner.setChipStack(winner.getChipStack() + self.pot)
         else:
-            remainingPlayers.append(player)
-    return remainingPlayers
+            # Multiple players - evaluate hands
+            print("Revealing hands...\n")
+            
+            # Evaluate each player's hand
+            playerHands = []
+            communityCardsList = self.communityCards.getCommunityCards()
+            
+            for player in activePlayers:
+                holeCards = player.hand.getCards()
+                evaluatedHand = HandEvaluator.evaluateBestHand(holeCards, communityCardsList)
+                playerHands.append((player, evaluatedHand))
+                
+                # Show each player's cards and hand
+                print(f"{player.getName()}'s hole cards: {holeCards[0]} and {holeCards[1]}")
+                print(f"  {HandEvaluator.formatHandDescription(evaluatedHand, player.getName())}\n")
+            
+            # Find the winner(s)
+            winners = [playerHands[0]]
+            
+            for i in range(1, len(playerHands)):
+                comparison = HandEvaluator.compareHands(playerHands[i][1], winners[0][1])
+                
+                if comparison > 0:
+                    # New best hand found
+                    winners = [playerHands[i]]
+                elif comparison == 0:
+                    # Tie with current best
+                    winners.append(playerHands[i])
+            
+            # Award pot
+            print("="*50)
+            if len(winners) == 1:
+                winner = winners[0][0]
+                print(f"\n🏆 {winner.getName()} WINS THE POT OF ${self.pot}! 🏆\n")
+                winner.setChipStack(winner.getChipStack() + self.pot)
+            else:
+                # Split pot
+                splitAmount = self.pot / len(winners)
+                winnerNames = [w[0].getName() for w in winners]
+                print(f"\n🤝 SPLIT POT between {', '.join(winnerNames)}!")
+                print(f"Each player receives ${splitAmount:.2f}\n")
+                
+                for winner, _ in winners:
+                    winner.setChipStack(winner.getChipStack() + splitAmount)
+            
+            print("="*50)
+
+
+    def _dealHoleCards(self) -> None:
+        """Deals two cards to each player in the game"""
+
+        for player in self.playerList:
+            player.hand.acceptCard(self.deck.draw())
+            player.hand.acceptCard(self.deck.draw())
+
+
+    def _postBlinds(self) -> None:
+        """Have small blind and big blind post their forced bets"""
+        # Small blind
+        self.playerList[0].setBet(self.sb)
+        self.playerList[0].setChipStack(self.playerList[0].getChipStack() - self.sb)
+        print(f"{self.playerList[0].getName()} posts small blind: ${self.sb}")
+        
+        # Big blind
+        self.playerList[1].setBet(self.bb)
+        self.playerList[1].setChipStack(self.playerList[1].getChipStack() - self.bb)
+        print(f"{self.playerList[1].getName()} posts big blind: ${self.bb}")
+        
+        # Add blinds to pot
+        self.pot += self.sb + self.bb
+        self.previousBet = self.bb
+        print(f"Pot: ${self.pot}\n")
+
+    def _runBettingRound(self, startIndex: int) -> None:
+            """Run a complete betting round
+            
+            Args:
+                startIndex: Index of player who acts first
+            """
+            # Track who has acted
+            hasActed = [False] * len(self.playerList)
+            currentPlayerIndex = startIndex
+            
+            # Continue until all active players have acted and matched the current bet
+            while not self._isBettingComplete(hasActed):
+                player = self.playerList[currentPlayerIndex]
+                
+                # Skip folded players
+                if player.getFoldStatus():
+                    hasActed[currentPlayerIndex] = True
+                    currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
+                    continue
+                
+                # Skip if already acted and bet is matched
+                if hasActed[currentPlayerIndex] and player.getBet() == self.previousBet:
+                    currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
+                    continue
+                
+                # Calculate amount to call
+                amountToCall = self.previousBet - player.getBet()
+                
+                # Handle player action
+                if player.getIsAIPlayer():
+                    self._handleAIAction(player, currentPlayerIndex, amountToCall, hasActed)
+                else:
+                    self._handleHumanAction(player, currentPlayerIndex, amountToCall, hasActed)
+                
+                hasActed[currentPlayerIndex] = True
+                print(f"Pot: ${self.pot}\n")
+                
+                # Move to next player
+                currentPlayerIndex = (currentPlayerIndex + 1) % len(self.playerList)
+            
+    def _isBettingComplete(self, hasActed: list) -> bool:
+            """Check if betting round is complete
+            
+            Returns:
+                True if all active players have acted and matched the bet
+            """
+            for i, player in enumerate(self.playerList):
+                # Skip folded players
+                if player.getFoldStatus():
+                    continue
+                
+                # If player hasn't acted, betting not complete
+                if not hasActed[i]:
+                    return False
+                
+                # If player hasn't matched current bet, betting not complete
+                if player.getBet() != self.previousBet:
+                    return False
+            
+            return True
+        
+    def _handleAIAction(self, player, playerIndex: int, amountToCall: float, hasActed: list) -> None:
+        """Handle AI player action
+        
+        Args:
+            player: The AI player
+            playerIndex: Index of player in playerList
+            amountToCall: Amount needed to call
+            hasActed: List tracking who has acted
+        """
+        print(f"\n{player.getName()}'s turn (current bet: ${player.getBet()}, needs ${amountToCall} to call)")
+        
+        # Simple AI logic
+        action = random.randint(1, 10)
+        
+        # 40% call
+        if action <= 4 and amountToCall > 0:
+            if player.getChipStack() >= amountToCall:
+                player.setChipStack(player.getChipStack() - amountToCall)
+                player.setBet(self.previousBet)
+                self.pot += amountToCall
+                print(f"{player.getName()} calls ${amountToCall}")
+            else:
+                player.setFoldStatus(True)
+                print(f"{player.getName()} folds (not enough chips)")
+        
+        # 10% raise
+        elif action == 5:
+            raiseAmount = self.previousBet * 2 if self.previousBet > 0 else self.bb
+            additionalAmount = raiseAmount - player.getBet()
+            
+            if player.getChipStack() >= additionalAmount:
+                player.setChipStack(player.getChipStack() - additionalAmount)
+                player.setBet(raiseAmount)
+                self.pot += additionalAmount
+                self.previousBet = raiseAmount
+                
+                # Reset acted status for all other players
+                for i in range(len(hasActed)):
+                    if i != playerIndex:
+                        hasActed[i] = False
+                
+                print(f"{player.getName()} raises to ${raiseAmount}")
+            else:
+                # Not enough to raise, just call or fold
+                if amountToCall > 0 and player.getChipStack() >= amountToCall:
+                    player.setChipStack(player.getChipStack() - amountToCall)
+                    player.setBet(self.previousBet)
+                    self.pot += amountToCall
+                    print(f"{player.getName()} calls ${amountToCall}")
+                else:
+                    player.setFoldStatus(True)
+                    print(f"{player.getName()} folds")
+        
+        # 50% fold or check
+        else:
+            if amountToCall == 0:
+                print(f"{player.getName()} checks")
+            else:
+                player.setFoldStatus(True)
+                print(f"{player.getName()} folds")
+
+    def _handleHumanAction(self, player, playerIndex: int, amountToCall: float, hasActed: list) -> None:
+        """Handle human player action
+        
+        Args:
+            player: The human player
+            playerIndex: Index of player in playerList
+            amountToCall: Amount needed to call
+            hasActed: List tracking who has acted
+        """
+        print(f"\n{player.getName()}'s turn")
+        print(f"Your chips: ${player.getChipStack()}")
+        print(f"Current bet: ${player.getBet()}")
+        
+        if amountToCall > 0:
+            print(f"Amount to call: ${amountToCall}")
+        
+        validAction = False
+        while not validAction:
+            if amountToCall == 0:
+                action = input("Check, bet, or fold? (ch/b/f): ").lower()
+            else:
+                action = input(f"Call ${amountToCall}, raise, or fold? (c/r/f): ").lower()
+            
+            # Handle check (when no bet to call)
+            if action in ["ch", "check"] and amountToCall == 0:
+                print(f"{player.getName()} checks")
+                validAction = True
+            
+            # Handle bet (when no bet to call)
+            elif action in ["b", "bet"] and amountToCall == 0:
+                betAmount = utils.inputValidation(
+                    input(f"Bet amount (minimum ${self.bb}): "),
+                    float,
+                    "+"
+                )
+                
+                if betAmount < self.bb:
+                    print(f"Bet must be at least ${self.bb}")
+                elif player.getChipStack() < betAmount:
+                    print(f"Not enough chips! You only have ${player.getChipStack()}")
+                else:
+                    player.setChipStack(player.getChipStack() - betAmount)
+                    player.setBet(betAmount)
+                    self.pot += betAmount
+                    self.previousBet = betAmount
+                    
+                    # Reset acted status
+                    for i in range(len(hasActed)):
+                        if i != playerIndex:
+                            hasActed[i] = False
+                    
+                    print(f"{player.getName()} bets ${betAmount}")
+                    validAction = True
+            
+            # Handle call
+            elif action in ["c", "call"] and amountToCall > 0:
+                if player.getChipStack() < amountToCall:
+                    print(f"Not enough chips! You only have ${player.getChipStack()}")
+                else:
+                    player.setChipStack(player.getChipStack() - amountToCall)
+                    player.setBet(self.previousBet)
+                    self.pot += amountToCall
+                    print(f"{player.getName()} calls ${amountToCall}")
+                    validAction = True
+            
+            # Handle raise
+            elif action in ["r", "raise"]:
+                minimumRaise = self.previousBet * 2 if self.previousBet > 0 else self.bb
+                raiseAmount = utils.inputValidation(
+                    input(f"Raise to (minimum ${minimumRaise}): "),
+                    float,
+                    "+"
+                )
+                
+                if raiseAmount < minimumRaise:
+                    print(f"Raise must be at least ${minimumRaise}")
+                else:
+                    additionalAmount = raiseAmount - player.getBet()
+                    if player.getChipStack() < additionalAmount:
+                        print(f"Not enough chips! You only have ${player.getChipStack()}")
+                    else:
+                        player.setChipStack(player.getChipStack() - additionalAmount)
+                        player.setBet(raiseAmount)
+                        self.pot += additionalAmount
+                        self.previousBet = raiseAmount
+                        
+                        # Reset acted status
+                        for i in range(len(hasActed)):
+                            if i != playerIndex:
+                                hasActed[i] = False
+                        
+                        print(f"{player.getName()} raises to ${raiseAmount}")
+                        validAction = True
+            
+            # Handle fold
+            elif action in ["f", "fold"]:
+                player.setFoldStatus(True)
+                print(f"{player.getName()} folds")
+                validAction = True
+            
+            else:
+                print("Invalid input. Please try again.")
+
+    def _countActivePlayers(self) -> int:
+        """Count players who haven't folded
+        
+        Returns:
+            Number of active players
+        """
+        return sum(1 for p in self.playerList if not p.getFoldStatus())
+
+        
+
+
+
+
 
 
     

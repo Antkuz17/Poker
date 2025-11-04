@@ -1,4 +1,4 @@
-from round import Round
+from round import round
 
 """
 Game.py
@@ -41,12 +41,12 @@ class Game:
             self.showChipCounts()
             
             # Create and play a new round
-            newRound = Round(self.playerList, self.bb, self.sb)
+            newRound = round(self.playerList, self.bb, self.sb)
             newRound.playPreFlop()
             newRound.playFlop()
-            # newRound.playTurn()
-            # newRound.playRiver()
-            # newRound.playShowdown()
+            newRound.playTurn()
+            newRound.playRiver()
+            newRound.playShowdown()
             
             # Clean up after round
             self.cleanupAfterRound()

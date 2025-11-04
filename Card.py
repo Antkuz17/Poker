@@ -30,6 +30,6 @@ class Card:
     
     def getRank(self) -> str:
         """Returns the rank of the card as a string (2, 5, J, A, etc)"""
-        return [self.rank]
+        return self.rank
     
     

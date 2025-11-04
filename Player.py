@@ -45,7 +45,7 @@ class Player:
     
     def setFoldStatus(self, status: bool) -> None:
         """Sets the status of a player to folded or not"""
-        self.fold = bool
+        self.fold = status
 
     def getName(self) -> str:
         """Returns the name of the player as type string"""
