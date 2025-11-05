@@ -7,6 +7,8 @@ import utils
 import random 
 from CommunityCards import CommunityCards
 from HandEvaluator import HandEvaluator
+from itertools import combinations
+from collections import Counter
 
 """
 round.py
@@ -326,66 +328,94 @@ class round:
             
             return True
         
-    def _handleAIAction(self, player, playerIndex: int, amountToCall: float, hasActed: list) -> None:
-        """Handle AI player action
-        
-        Args:
-            player: The AI player
-            playerIndex: Index of player in playerList
-            amountToCall: Amount needed to call
-            hasActed: List tracking who has acted
-        """
-        print(f"\n{player.getName()}'s turn (current bet: ${player.getBet()}, needs ${amountToCall} to call)")
-        
-        # Simple AI logic
-        action = random.randint(1, 10)
-        
-        # 40% call
-        if action <= 4 and amountToCall > 0:
-            if player.getChipStack() >= amountToCall:
-                player.setChipStack(player.getChipStack() - amountToCall)
-                player.setBet(self.previousBet)
-                self.pot += amountToCall
-                print(f"{player.getName()} calls ${amountToCall}")
-            else:
-                player.setFoldStatus(True)
-                print(f"{player.getName()} folds (not enough chips)")
-        
-        # 10% raise
-        elif action == 5:
-            raiseAmount = self.previousBet * 2 if self.previousBet > 0 else self.bb
-            additionalAmount = raiseAmount - player.getBet()
+        def _handleAIAction(self, player, playerIndex: int, amountToCall: float, hasActed: list) -> None:
+            """Handle AI player action using Monte Carlo simulation
             
-            if player.getChipStack() >= additionalAmount:
-                player.setChipStack(player.getChipStack() - additionalAmount)
-                player.setBet(raiseAmount)
-                self.pot += additionalAmount
-                self.previousBet = raiseAmount
-                
-                # Reset acted status for all other players
-                for i in range(len(hasActed)):
-                    if i != playerIndex:
-                        hasActed[i] = False
-                
-                print(f"{player.getName()} raises to ${raiseAmount}")
-            else:
-                # Not enough to raise, just call or fold
-                if amountToCall > 0 and player.getChipStack() >= amountToCall:
-                    player.setChipStack(player.getChipStack() - amountToCall)
-                    player.setBet(self.previousBet)
-                    self.pot += amountToCall
-                    print(f"{player.getName()} calls ${amountToCall}")
+            Args:
+                player: The AI player
+                playerIndex: Index of player in playerList
+                amountToCall: Amount needed to call
+                hasActed: List tracking who has acted
+            """
+            print(f"\n{player.getName()}'s turn (current bet: ${player.getBet()}, needs ${amountToCall} to call)")
+            
+            # Calculate win probability using Monte Carlo simulation
+            win_prob = self._simulateWinProbability(player, num_simulations=500)
+            print(f"  [AI thinks win probability: {win_prob:.1%}]")
+            
+            # Calculate pot odds if there's an amount to call
+            pot_odds = amountToCall / (self.pot + amountToCall) if amountToCall > 0 else 0
+            
+            # Decision logic based on win probability
+            if amountToCall == 0:
+                # No cost to stay in - decide whether to bet/raise or check
+                if win_prob > 0.55:
+                    # Strong hand means consider raising
+                    raiseAmount = self.previousBet * 2 if self.previousBet > 0 else self.bb
+                    additionalAmount = raiseAmount - player.getBet()
+                    
+                    #Raise probability increases with hand strength
+                    should_raise = random.random() < (win_prob - 0.55) * 2
+                    
+                    if player.getChipStack() >= additionalAmount and should_raise:
+                        player.setChipStack(player.getChipStack() - additionalAmount)
+                        
+                        player.setBet(raiseAmount)
+                        self.pot += additionalAmount
+                        self.previousBet = raiseAmount
+                        
+                        # Reset acted status for all other players
+                        for i in range(len(hasActed)):
+                            if i != playerIndex:
+                                hasActed[i] = False
+                        
+                        print(f"{player.getName()} raises to ${raiseAmount}")
+                    else:
+                        print(f"{player.getName()} checks")
                 else:
+                    print(f"{player.getName()} checks")
+            
+            else:
+                # Good call if win_prob > pot_odds (with 20% margin for safety)
+                if win_prob > pot_odds * 1.2:
+                    if player.getChipStack() >= amountToCall:
+                        # Good value - decide between calling and raising
+                        if win_prob > 0.70 and random.random() < 0.25:
+                            # Very strong hand - sometimes raise
+                            raiseAmount = self.previousBet * 2
+                            additionalAmount = raiseAmount - player.getBet()
+                            
+                            if player.getChipStack() >= additionalAmount:
+                                player.setChipStack(player.getChipStack() - additionalAmount)
+                                player.setBet(raiseAmount)
+                                self.pot += additionalAmount
+                                self.previousBet = raiseAmount
+                                
+                                # Reset acted status for all other players
+                                for i in range(len(hasActed)):
+                                    if i != playerIndex:
+                                        hasActed[i] = False
+                                
+                                print(f"{player.getName()} raises to ${raiseAmount}")
+                            else:
+                                # Not enough to raise, just call
+                                player.setChipStack(player.getChipStack() - amountToCall)
+                                player.setBet(self.previousBet)
+                                self.pot += amountToCall
+                                print(f"{player.getName()} calls ${amountToCall}")
+                        else:
+                            # Call
+                            player.setChipStack(player.getChipStack() - amountToCall)
+                            player.setBet(self.previousBet)
+                            self.pot += amountToCall
+                            print(f"{player.getName()} calls ${amountToCall}")
+                    else:
+                        player.setFoldStatus(True)
+                        print(f"{player.getName()} folds (not enough chips)")
+                else:
+                    # Bad value - fold
                     player.setFoldStatus(True)
                     print(f"{player.getName()} folds")
-        
-        # 50% fold or check
-        else:
-            if amountToCall == 0:
-                print(f"{player.getName()} checks")
-            else:
-                player.setFoldStatus(True)
-                print(f"{player.getName()} folds")
 
     def _handleHumanAction(self, player, playerIndex: int, amountToCall: float, hasActed: list) -> None:
         """Handle human player action
@@ -497,6 +527,170 @@ class round:
             Number of active players
         """
         return sum(1 for p in self.playerList if not p.getFoldStatus())
+    
+    def _simulateWinProbability(self, player, num_simulations=500):
+        """
+        Run Monte Carlo simulation to estimate win probability
+        In essece this function simulates random outcomes for the remaining community cards
+        and opponent hole cards, then evaluates how often the given player wins.
+        
+        Args:
+            player: The player to evaluate
+            num_simulations: Number of simulations to run
+            
+        Returns:
+            float: Win probability (0.0 to 1.0)
+        """
+        player_hole_cards = player.hand.getCards()
+        community_cards = self.communityCards.getCommunityCards()
+        
+        # Count active opponents
+        num_opponents = sum(1 for p in self.playerList if not p.getFoldStatus() and p != player)
+        
+        if num_opponents == 0:
+            return 1.0  # No opponents, we win
+        
+        wins = 0
+        ties = 0
+        
+        # Get all known cards
+        known_cards = set()
+        for card in player_hole_cards + community_cards:
+            known_cards.add((card.getRank(), card.getSuit()))
+        
+        # Create deck of unknown cards
+        all_ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+        all_suits = ['Hearts', 'Spades', 'Diamonds', 'Clubs']
+        unknown_deck = [(r, s) for r in all_ranks for s in all_suits if (r, s) not in known_cards]
+        
+        # Central Simulation Loop used to run the simulation
+        for _ in range(num_simulations):
+            # Shuffle unknown cards
+            random.shuffle(unknown_deck)
+            
+            # Deal remaining community cards
+            cards_needed = 5 - len(community_cards)
+            simulated_community = list(community_cards)
+            
+            for i in range(cards_needed):
+                rank, suit = unknown_deck[i]
+                # Create a simple card-like object
+                card = type('Card', (), {'getRank': lambda r=rank: r, 'getSuit': lambda s=suit: s})()
+                simulated_community.append(card)
+            
+            # Evaluate player's hand
+            player_hand_rank = self._evaluateHandQuick(player_hole_cards + simulated_community)
+            
+            # Simulate opponent hands
+            deck_idx = cards_needed
+            player_wins_this_sim = True
+            player_ties_this_sim = False
+            
+            for _ in range(num_opponents):
+                # Deal 2 cards to opponent
+                opp_cards = []
+                for _ in range(2):
+                    rank, suit = unknown_deck[deck_idx]
+                    card = type('Card', (), {'getRank': lambda r=rank: r, 'getSuit': lambda s=suit: s})()
+                    opp_cards.append(card)
+                    deck_idx += 1
+                
+                # Evaluate opponent's hand
+                opp_hand_rank = self._evaluateHandQuick(opp_cards + simulated_community)
+                
+                # Compare
+                if opp_hand_rank > player_hand_rank:
+                    player_wins_this_sim = False
+                    break
+                elif opp_hand_rank == player_hand_rank:
+                    player_ties_this_sim = True
+            
+            if player_wins_this_sim:
+                if player_ties_this_sim:
+                    ties += 1
+                else:
+                    wins += 1
+        
+        return (wins + ties * 0.5) / num_simulations
+
+    def _evaluateHandQuick(self, cards):
+        """
+        Quick hand evaluation returning a comparable number (higher = better)
+        Returns tuple: (hand_rank, tiebreakers)
+        """
+        if len(cards) < 5:
+            return (0, [])
+        
+        # Convert cards to (rank_value, suit) tuples
+        rank_values = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10,
+                       '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2}
+        
+        card_tuples = [(rank_values[card.getRank()], card.getSuit()) for card in cards]
+        
+        # Try all 5-card combinations and get the best
+        best_rank = (0, [])
+        for combo in combinations(card_tuples, 5):
+            rank = self._evaluate5Cards(list(combo))
+            if rank > best_rank:
+                best_rank = rank
+        
+        return best_rank
+
+    def _evaluate5Cards(self, cards) -> tuple:
+        """Evaluate exactly 5 cards - returns (hand_rank, tiebreakers)"""
+        ranks = sorted([c[0] for c in cards], reverse=True)
+        suits = [c[1] for c in cards]
+        rank_counts = Counter(ranks)
+        
+        is_flush = len(set(suits)) == 1
+        is_straight = (ranks[0] - ranks[4] == 4 and len(rank_counts) == 5) or \
+                      (ranks == [14, 5, 4, 3, 2])  
+        
+        counts = sorted(rank_counts.values(), reverse=True)
+        
+        # Straight Flush (including Royal)
+        if is_flush and is_straight:
+            return (8, ranks)
+        
+        # Four of a Kind
+        if counts == [4, 1]:
+            four = [r for r, c in rank_counts.items() if c == 4][0]
+            kicker = [r for r, c in rank_counts.items() if c == 1][0]
+            return (7, [four, kicker])
+        
+        # Full House
+        if counts == [3, 2]:
+            three = [r for r, c in rank_counts.items() if c == 3][0]
+            pair = [r for r, c in rank_counts.items() if c == 2][0]
+            return (6, [three, pair])
+        # Flush
+        if is_flush:
+            return (5, ranks)
+        
+        # Straight
+        if is_straight:
+            return (4, ranks)
+        
+        # Three of a Kind
+        if counts == [3, 1, 1]:
+            three = [r for r, c in rank_counts.items() if c == 3][0]
+            kickers = sorted([r for r, c in rank_counts.items() if c == 1], reverse=True)
+            return (3, [three] + kickers)
+        
+        # Two Pair (Same card twice, two times)
+        if counts == [2, 2, 1]:
+            pairs = sorted([r for r, c in rank_counts.items() if c == 2], reverse=True)
+            kicker = [r for r, c in rank_counts.items() if c == 1][0]
+            return (2, pairs + [kicker])
+        # One Pair
+        if counts == [2, 1, 1, 1]:
+            pair = [r for r, c in rank_counts.items() if c == 2][0]
+            kickers = sorted([r for r, c in rank_counts.items() if c == 1], reverse=True)
+            return (1, [pair] + kickers)
+        
+        # High Card
+        return (0, ranks)
+
 
         
 
